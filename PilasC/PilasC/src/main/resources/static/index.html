@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluador de Expresiones</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .container {
+            width: 400px;
+            border: 1px solid #ccc;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+        }
+        .input-field, .output, .variables-section, .error-section {
+            margin: 20px 0;
+        }
+        #output {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 50px;
+            background-color: #ffe6e6;
+        }
+        .error-section {
+            border: 1px solid #f00;
+            padding: 10px;
+            min-height: 50px;
+            background-color: #ffe6e6;
+        }
+        .buttons, .num-buttons, .op-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+        }
+        button {
+            width: 75px;
+            height: 30px;
+            font-size: 15px;
+        }
+        .variables-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>EVALUADOR</h1>
+
+    <div class="variables-section">
+        <label for="variables">Variables</label>
+        <select id="variables">
+            <option value="Var1">Var1</option>
+        </select>
+        <input type="text" id="varValue" placeholder="9" />
+        <button onclick="crearVariable()">Crear Variable</button>
+    </div>
+
+    <div class="input-field">
+        <label for="expresion">Expresión:</label>
+        <input type="text" id="expresion" placeholder="3 + 2 * @Var1" />
+    </div>
+
+    <button onclick="evaluar()">Evaluar</button>
+
+    <div class="buttons">
+        <div class="op-buttons">
+            <button onclick="agregarOperador('+')">+</button>
+            <button onclick="agregarOperador('-')">-</button>
+            <button onclick="agregarOperador('*')">*</button>
+            <button onclick="agregarOperador('/')">/</button>
+            <button onclick="agregarOperador('(')">(</button>
+            <button onclick="agregarOperador(')')">)</button>
+            <button onclick="agregarOperador('@')">@</button>
+        </div>
+        <div class="num-buttons">
+            <button onclick="agregarOperador('1')">1</button>
+            <button onclick="agregarOperador('2')">2</button>
+            <button onclick="agregarOperador('3')">3</button>
+            <button onclick="agregarOperador('4')">4</button>
+            <button onclick="agregarOperador('5')">5</button>
+            <button onclick="agregarOperador('6')">6</button>
+            <button onclick="agregarOperador('7')">7</button>
+            <button onclick="agregarOperador('8')">8</button>
+            <button onclick="agregarOperador('9')">9</button>
+            <button onclick="agregarOperador('0')">0</button>
+        </div>
+    </div>
+
+    <div id="output" class="output"></div>
+    <div id="errorSection" class="error-section"></div>
+</div>
+
+<script>
+    function agregarOperador(op) {
+        document.getElementById("expresion").value += op;
+    }
+
+    function crearVariable() {
+        const nombre = document.getElementById("variables").value;
+        const valor = document.getElementById("varValue").value;
+
+        fetch('/api/crearVariable', {  // Cambiamos la URL a /api/crearVariable
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ nombre: nombre, valor: valor })
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error("Error al crear variable.");
+            }
+        }).catch(error => {
+            document.getElementById("errorSection").innerHTML = "Error: " + error.message;
+        });
+    }
+
+    function evaluar() {
+        const expresion = document.getElementById("expresion").value;
+        fetch('/api/evaluar', {  // Cambiamos la URL a /api/evaluar
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ expresion: expresion })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error("Error en el servidor: " + text);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById("output").innerHTML = "Resultado: " + data.resultado + "<br>Pila de operandos: " + data.pilaOperandos + "<br>Pila de operadores: " + data.pilaOperadores;
+            })
+            .catch(error => {
+                document.getElementById("errorSection").innerHTML = "Error: " + error.message;
+                console.error('Error:', error);
+            });
+    }
+</script>
+</body>
+</html>
